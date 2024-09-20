@@ -8,7 +8,7 @@ import jwt
 
 router = APIRouter()
 
-@router.get("/users/me")
+@router.get("/me")
 async def get_current_user(token: str = Depends(oauth2_scheme)):
     """
     token: {token_type} {access_token}
@@ -27,6 +27,22 @@ async def get_current_user(token: str = Depends(oauth2_scheme)):
 
         user = await User.filter(anonymous_identifier=identifier).first()
         return user
+    except HTTPException as e:
+        logger.error(str(e))
+        raise e
+    except Exception as e:
+        logger.error(str(e))
+        raise HTTPException(status_code=500, detail="Internal Server Error")
+
+
+@router.get("/admin")
+async def admin_endpoint(token: str = Depends(oauth2_scheme)):
+    try:
+        
+        user = await get_current_user(token)
+        if user.role != "admin":
+            raise HTTPException(status_code=403, detail="Not enough permissions")
+        return {"message": "Welcome, admin"}
     except HTTPException as e:
         logger.error(str(e))
         raise e
