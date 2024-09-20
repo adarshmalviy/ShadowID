@@ -1,6 +1,7 @@
-from fastapi import FastAPI, HTTPException
-from app.auth import create_access_token
+from fastapi import Depends, FastAPI, HTTPException
+from app.auth import create_access_token, oauth2_scheme, SECRET_KEY, ALGORITHM
 from app.db.models import User
+import jwt
 
 app = FastAPI()
 
@@ -28,3 +29,19 @@ async def login(anonymous_identifier: str):
     # Create JWT token
     access_token = create_access_token(data={"sub": user.anonymous_identifier})
     return {"access_token": access_token, "token_type": "bearer"}
+
+
+@app.get("/users/me")
+async def get_current_user(token: str = Depends(oauth2_scheme)):
+    credentials_exception = HTTPException(
+        status_code=401, detail="Could not validate credentials"
+    )
+    try:
+        payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
+        identifier: str = payload.get("sub")
+        if identifier is None:
+            raise credentials_exception
+    except jwt.PyJWTError:
+        raise credentials_exception
+    user = await User.filter(anonymous_identifier=identifier).first()
+    return user
