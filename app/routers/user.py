@@ -1,8 +1,6 @@
-from datetime import timedelta
 from app.loggers import logger
-from fastapi import APIRouter, Depends, FastAPI, HTTPException
-from pydantic import HttpUrl
-from app.auth import create_access_token, oauth2_scheme, SECRET_KEY, ALGORITHM
+from fastapi import APIRouter, Depends, HTTPException
+from app.auth import oauth2_scheme, SECRET_KEY, ALGORITHM
 from app.db.models import User
 import jwt
 
@@ -11,7 +9,7 @@ router = APIRouter()
 @router.get("/me")
 async def get_current_user(token: str = Depends(oauth2_scheme)):
     """
-    token: {token_type} {access_token}
+    Get the current logged-in user details.
     """
     credentials_exception = HTTPException(
         status_code=401, detail="Could not validate credentials"
@@ -24,12 +22,10 @@ async def get_current_user(token: str = Depends(oauth2_scheme)):
     except jwt.PyJWTError:
         raise credentials_exception
     try:
-
         user = await User.filter(anonymous_identifier=identifier).first()
+        if user is None:
+            raise credentials_exception
         return user
-    except HTTPException as e:
-        logger.error(str(e))
-        raise e
     except Exception as e:
         logger.error(str(e))
         raise HTTPException(status_code=500, detail="Internal Server Error")
@@ -37,15 +33,14 @@ async def get_current_user(token: str = Depends(oauth2_scheme)):
 
 @router.get("/admin")
 async def admin_endpoint(token: str = Depends(oauth2_scheme)):
+    """
+    Restricted endpoint only for admin users.
+    """
     try:
-        
         user = await get_current_user(token)
         if user.role != "admin":
             raise HTTPException(status_code=403, detail="Not enough permissions")
         return {"message": "Welcome, admin"}
-    except HTTPException as e:
-        logger.error(str(e))
-        raise e
     except Exception as e:
         logger.error(str(e))
         raise HTTPException(status_code=500, detail="Internal Server Error")
