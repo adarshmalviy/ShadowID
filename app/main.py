@@ -17,10 +17,6 @@ async def lifespan(app: FastAPI):
     await init_tortoise()
     init_db(app=app)
 
-    # NOTE: We need to have all instances share the same JWKS keys
-    # Generate JWKS
-    # generate_jwks()
-
     yield
 
     await close_db()
