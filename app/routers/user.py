@@ -1,38 +1,57 @@
-from fastapi import Depends, FastAPI, HTTPException
+from app.loggers import logger
+from fastapi import APIRouter, Depends, FastAPI, HTTPException
+from pydantic import HttpUrl
 from app.auth import create_access_token, oauth2_scheme, SECRET_KEY, ALGORITHM
 from app.db.models import User
 import jwt
 
-app = FastAPI()
+router = APIRouter()
 
 
-@app.post("/register")
+@router.post("/register")
 async def register_user(seed: str):
     """
     seed: ... (could be from device info, a random string, or user-supplied input)
     """
-    # Generate anonymous identifier using seed
-    user = User(anonymous_identifier=User().generate_anonymous_identifier(seed))
-    await user.save()
-    return {
-        "anonymous_identifier": user.anonymous_identifier,
-        "message": "Registration successful",
-    }
+    try:
+        # Generate anonymous identifier using seed
+        user = User(anonymous_identifier=User().generate_anonymous_identifier(seed))
+        await user.save()
+        return {
+            "anonymous_identifier": user.anonymous_identifier,
+            "message": "Registration successful",
+        }
+    except HTTPException as e:
+        logger.error(str(e))
+        raise e
+    except Exception as e:
+        logger.error(str(e))
+        raise HTTPException(status_code=500, detail="Internal Server Error")
 
 
-@app.post("/token")
+@router.post("/token")
 async def login(anonymous_identifier: str):
-    user = await User.filter(anonymous_identifier=anonymous_identifier).first()
-    if not user:
-        raise HTTPException(status_code=400, detail="Invalid credentials")
+    try:
+        user = await User.filter(anonymous_identifier=anonymous_identifier).first()
+        if not user:
+            raise HTTPException(status_code=400, detail="Invalid credentials")
 
-    # Create JWT token
-    access_token = create_access_token(data={"sub": user.anonymous_identifier})
-    return {"access_token": access_token, "token_type": "bearer"}
+        # Create JWT token
+        access_token = create_access_token(data={"sub": user.anonymous_identifier})
+        return {"access_token": access_token, "token_type": "bearer"}
+    except HTTPException as e:
+        logger.error(str(e))
+        raise e
+    except Exception as e:
+        logger.error(str(e))
+        raise HTTPException(status_code=500, detail="Internal Server Error")
 
 
-@app.get("/users/me")
+@router.get("/users/me")
 async def get_current_user(token: str = Depends(oauth2_scheme)):
+    """
+    token: {token_type} {access_token}
+    """
     credentials_exception = HTTPException(
         status_code=401, detail="Could not validate credentials"
     )
@@ -43,5 +62,13 @@ async def get_current_user(token: str = Depends(oauth2_scheme)):
             raise credentials_exception
     except jwt.PyJWTError:
         raise credentials_exception
-    user = await User.filter(anonymous_identifier=identifier).first()
-    return user
+    try:
+
+        user = await User.filter(anonymous_identifier=identifier).first()
+        return user
+    except HTTPException as e:
+        logger.error(str(e))
+        raise e
+    except Exception as e:
+        logger.error(str(e))
+        raise HTTPException(status_code=500, detail="Internal Server Error")

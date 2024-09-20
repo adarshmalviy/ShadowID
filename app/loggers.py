@@ -4,7 +4,7 @@ from colorlog import ColoredFormatter
 
 from app.config import settings
 
-log_level = "DEBUG"
+log_level = "ERROR"
 
 if not settings.is_development:
     log_level = "INFO"

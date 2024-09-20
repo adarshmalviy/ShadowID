@@ -12,6 +12,7 @@ class Settings(BaseSettings):
     fastapi_port: int = 8080
     access_token_expiry: int = 30
     refresh_token_expiry: int = 60 * 24 * 7
+    basic_auth_username: str
     basic_auth_password: str
     secret_key: str
     algorithm: str

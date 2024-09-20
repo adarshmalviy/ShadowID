@@ -35,8 +35,8 @@ async def lifespan(app: FastAPI):
 def create_app() -> FastAPI:
     """Factory function to create and configure the FastAPI application."""
     app = FastAPI(
-        title="Daywon SSO",
-        description="Documentation of Daywon SSO",
+        title="ShadowID",
+        description="Privacy Focused Authentication System",
         # Conditionally disable documentation based on IS_DEVELOPMENT
         docs_url="/docs" if settings.is_development else None,
         lifespan=lifespan,
