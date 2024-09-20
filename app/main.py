@@ -3,6 +3,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from contextlib import asynccontextmanager
 
 from app.routers import (
+    auth,
     spotlight_doc,
     health,
     user,
@@ -63,6 +64,7 @@ def register_routers(app: FastAPI) -> None:
     """Registers all the routers for the application."""
 
     app.include_router(router=health.router, prefix="/health", tags=["health"])
+    app.include_router(router=auth.router, prefix="/auth", tags=["auth"])
     app.include_router(router=user.router, prefix="/user", tags=["user"])
     
     if settings.is_development:
