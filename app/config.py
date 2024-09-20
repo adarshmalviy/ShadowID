@@ -10,9 +10,11 @@ class Settings(BaseSettings):
     is_development: bool = True
     is_local: bool = False
     fastapi_port: int = 8080
-    basic_auth_username: str
+    access_token_expiry: int = 30
+    refresh_token_expiry: int = 60 * 24 * 7
     basic_auth_password: str
     secret_key: str
+    algorithm: str
     security_password_salt: str
     database_host: str
     database_port: int = 5432
