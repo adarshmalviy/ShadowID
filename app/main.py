@@ -5,17 +5,27 @@ from contextlib import asynccontextmanager
 from app.routers import (
     spotlight_doc,
     health,
+    user,
 )
 from app.config import settings
-from app.db.orm_config import init_db, init_tortoise, close_db
-
+from app.db.orm_config import generate_schema, init_db, init_tortoise, close_db
+from app.loggers import logger
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     """Handles startup and shutdown events for the application."""
     # Initialize database
-    await init_tortoise()
+    try:
+        await init_tortoise()
+    except Exception as e:
+        logger.error(f"Failed to connect to database: {e}")
+
+    # await init_tortoise()
     init_db(app=app)
+    try:
+        await generate_schema()
+    except Exception as e:
+        logger.error(f"Failed to generate schema: {e}")
 
     yield
 
@@ -51,8 +61,9 @@ def configure_cors(app: FastAPI) -> None:
 
 def register_routers(app: FastAPI) -> None:
     """Registers all the routers for the application."""
-    
+
     app.include_router(router=health.router, prefix="/health", tags=["health"])
+    app.include_router(router=user.router, prefix="/user", tags=["user"])
     
     if settings.is_development:
         # SL Docs
