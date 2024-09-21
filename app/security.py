@@ -1,16 +1,18 @@
 from cryptography.fernet import Fernet
 from redis import Redis
+from app.services.redis_service import RedisService
 import time
 
-r = Redis()
+from app.config import settings
 
+r: Redis = RedisService.get_instance()
 # Generate a key for encryption (do this once and store it securely)
 key = Fernet.generate_key()
 cipher_suite = Fernet(key)
 
 # Max login attempts and block duration for rate-limiting
-MAX_ATTEMPTS = 5
-BLOCK_DURATION = 300  # Block for 5 minutes
+MAX_ATTEMPTS = settings.max_login_attempts
+BLOCK_DURATION = settings.login_block_duration  # in sec
 
 
 def encrypt_data(data: str) -> str:

@@ -10,7 +10,9 @@ class Settings(BaseSettings):
     is_development: bool = True
     is_local: bool = False
     fastapi_port: int = 8080
-    access_token_expiry: int = 30
+    max_login_attempts: int = 5
+    login_block_duration: int = 300
+    access_token_expiry: int = 60
     refresh_token_expiry: int = 60 * 24 * 7
     basic_auth_username: str
     basic_auth_password: str
@@ -22,6 +24,10 @@ class Settings(BaseSettings):
     database_username: str
     database_password: str
     database_name: str
+    redis_host: str = 'localhost'
+    redis_port: int = 6379
+    redis_db: int = 0
+    # redis_password: str # Optional, If Redis has password
 
 
 settings = Settings()

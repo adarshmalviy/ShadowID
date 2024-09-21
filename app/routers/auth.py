@@ -1,14 +1,16 @@
 from datetime import timedelta
+
+from redis import Redis
 from app.loggers import logger
 from fastapi import APIRouter, Depends, HTTPException
 from app.auth import create_access_token, create_refresh_token
 from app.db.models import User
 from app.config import settings
 from app.security import encrypt_data, decrypt_data, is_rate_limited, block_user
-import redis
+from app.services.redis_service import RedisService
 
 router = APIRouter()
-r = redis.Redis()
+r: Redis = RedisService.get_instance()
 
 
 @router.post("/register")
@@ -89,7 +91,7 @@ async def refresh_token(refresh_token: str):
             raise HTTPException(status_code=400, detail="Invalid refresh token")
 
         # Decode bytes to string (if using Redis)
-        stored_identifier = stored_identifier.decode("utf-8")
+        # stored_identifier = stored_identifier.decode("utf-8") # Currently: Redis response decoding is true
 
         user = await User.get_or_none(anonymous_identifier=stored_identifier)
         if not user:
