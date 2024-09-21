@@ -127,3 +127,4 @@ todo.org
 db.sqlite3*
 names.txt
 test.sh
+.env
