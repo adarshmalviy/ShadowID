@@ -2,6 +2,9 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from contextlib import asynccontextmanager
 
+from redis import RedisError
+from tortoise.exceptions import DBConnectionError
+
 from app.routers import (
     auth,
     spotlight_doc,
@@ -11,26 +14,49 @@ from app.routers import (
 from app.config import settings
 from app.db.orm_config import generate_schema, init_db, init_tortoise, close_db
 from app.loggers import logger
+from app.services.redis_service import RedisService
+
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    """Handles startup and shutdown events for the application."""
-    # Initialize database
+    """Structured lifespan with detailed logging and error handling for startup and shutdown."""
+
     try:
         await init_tortoise()
+        logger.info("Database connection initialized successfully.")
+    except DBConnectionError as db_error:
+        logger.error(f"Failed to connect to database: {db_error}")
+        raise db_error
     except Exception as e:
-        logger.error(f"Failed to connect to database: {e}")
+        logger.error(f"Unexpected error during database connection: {e}")
+        raise e
 
-    # await init_tortoise()
-    init_db(app=app)
     try:
+        init_db(app)
         await generate_schema()
+        logger.info("Database schema generated successfully.")
     except Exception as e:
-        logger.error(f"Failed to generate schema: {e}")
+        logger.error(f"Error generating schema: {e}")
+        raise e
+
+    try:
+        RedisService.get_instance()
+        logger.info("Redis connection initialized successfully.")
+    except RedisError as redis_error:
+        logger.error(f"Failed to connect to Redis: {redis_error}")
+        raise redis_error
+    except Exception as e:
+        logger.error(f"Unexpected error during Redis initialization: {e}")
+        raise e
 
     yield
 
-    await close_db()
+    try:
+        await close_db()
+        logger.info("Database connection closed successfully.")
+    except Exception as e:
+        logger.error(f"Error during database shutdown: {e}")
+        raise e
 
 
 def create_app() -> FastAPI:
@@ -68,7 +94,6 @@ def register_routers(app: FastAPI) -> None:
     app.include_router(router=user.router, prefix="/user", tags=["user"])
     
     if settings.is_development:
-        # SL Docs
         app.include_router(router=spotlight_doc.router, prefix="/sldoc", tags=["sldoc"])
 
 
