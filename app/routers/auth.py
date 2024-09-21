@@ -6,7 +6,7 @@ from fastapi import APIRouter, Depends, HTTPException
 from app.auth import create_access_token, create_refresh_token
 from app.db.models import User
 from app.config import settings
-from app.security import encrypt_data, decrypt_data, is_rate_limited, block_user
+from app.security import clear_attempts, encrypt_data, decrypt_data, increment_attempts, is_rate_limited, block_user
 from app.services.redis_service import RedisService
 
 router = APIRouter()
@@ -48,9 +48,12 @@ async def login(anonymous_identifier: str):
 
         user = await User.filter(anonymous_identifier=anonymous_identifier).first()
         if not user:
-            # Block further attempts for a duration if login fails
-            block_user(anonymous_identifier)
+            # Increment login attempts after failure
+            increment_attempts(anonymous_identifier)
             raise HTTPException(status_code=400, detail="Invalid credentials")
+
+        # Clear attempts on successful login
+        clear_attempts(anonymous_identifier)
 
         # Create JWT token
         access_token = create_access_token(data={"sub": user.anonymous_identifier})
