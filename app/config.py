@@ -17,6 +17,7 @@ class Settings(BaseSettings):
     refresh_token_expiry: int = 60 * 24 * 7
     basic_auth_username: str
     basic_auth_password: str
+    fernet_key: str
     secret_key: str
     algorithm: str
     security_password_salt: str
