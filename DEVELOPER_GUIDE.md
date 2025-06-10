@@ -20,7 +20,7 @@ app/
 ├── routers/
 │   ├── auth.py         # Routes for authentication (login, refresh tokens, register)
 │   ├── user.py         # Routes for user-related endpoints (get current user, admin check)
-├── security.py         # Handles encryption, token rotation, and rate-limiting
+├── security.py         # Handles hashing, token rotation, and rate-limiting
 ├── __init__.py         # App initialization
 └── main.py             # Main entry point for FastAPI application
 ```
@@ -52,12 +52,12 @@ One of the key features in ShadowID is **token rotation** for security. Each tim
 
 - **File**: `app/routers/auth.py` and `app/security.py`
 - **Key Functions**:
-  - `encrypt_data`: Encrypts refresh tokens before storing them in Redis, ensuring that sensitive tokens are protected.
+  - `encrypt_data`: Hashes refresh tokens before storing them in Redis, ensuring that sensitive tokens are protected.
   - `rotate_refresh_token`: Ensures that old tokens are deleted and replaced by new ones when they’re used to refresh an access token.
 
 #### How token-rotation Works
 
-- When a refresh token is presented, ShadowID encrypts the new refresh token before storing it in Redis.
+- When a refresh token is presented, ShadowID hashes the new refresh token before storing it in Redis.
 - Old tokens are automatically invalidated by deleting them from Redis upon refresh.
 - This adds an extra layer of security by ensuring that if a token is compromised, it won’t be usable for long.
 

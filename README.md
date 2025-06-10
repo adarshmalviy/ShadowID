@@ -18,9 +18,9 @@ No need to provide personal information like email addresses or phone numbers to
 
 ShadowID uses **OAuth2** for authentication with **JWT** to issue access tokens. These tokens are lightweight and secure, ensuring that only the right people (or anonymous identifiers) can access the system.
 
-### 3. **Refresh Tokens (with Encryption)**
+### 3. **Refresh Tokens (with Hashing)**
 
-We've taken security up a notch. **Refresh tokens** allow users to stay logged in without having to re-authenticate every few minutes. And, of course, these tokens are **encrypted** before they’re stored in Redis. Think of it as locking up the tokens in a digital vault.
+We've taken security up a notch. **Refresh tokens** allow users to stay logged in without having to re-authenticate every few minutes. For safety these tokens are stored in Redis **after being hashed**, so even if Redis is compromised the raw tokens remain secret.
 
 ### 4. **Token Rotation**
 

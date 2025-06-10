@@ -1,15 +1,10 @@
 import time
 from redis import Redis
-from cryptography.fernet import Fernet
+import hashlib
 from app.services.redis_service import RedisService
 from app.config import settings
 
 r: Redis = RedisService.get_instance()
-
-# Generate a key for encryption (do this once and store it securely)
-# key = Fernet.generate_key()
-key = settings.fernet_key
-cipher_suite = Fernet(key)
 
 # Max login attempts and block duration for rate-limiting
 MAX_ATTEMPTS = settings.max_login_attempts
@@ -26,15 +21,15 @@ def get_blocked_key(identifier: str) -> str:
     return f"blocked:{identifier}"
 
 
-# Encrypt/Decrypt Functions
+# Token Hashing Functions
 def encrypt_data(data: str) -> str:
-    """Encrypts the given data using Fernet symmetric encryption."""
-    return cipher_suite.encrypt(data.encode()).decode()
+    """Return a deterministic hash of the given data."""
+    return hashlib.sha256(data.encode()).hexdigest()
 
 
 def decrypt_data(encrypted_data: str) -> str:
-    """Decrypts the given data."""
-    return cipher_suite.decrypt(encrypted_data.encode()).decode()
+    """Return the hashed data as-is (kept for backward compatibility)."""
+    return encrypted_data
 
 
 # Rate-Limiting Functions
